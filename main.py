@@ -5,6 +5,8 @@ from PyQt5.QtGui import QIcon
 from widgets.menuBar import MenuBar
 from widgets.statusBar import StatusBar
 
+from preprocessor_dir.preprocessor import Preprocessor
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -14,6 +16,7 @@ class MainWindow(QMainWindow):
         self.status_bar = StatusBar(parent=self)
         self.central_widget = QWidget()
         self.main_layout = QHBoxLayout()
+        self.preprocessor = Preprocessor()
         self.setup_ui()
 
     def setup_window_settings(self):
@@ -26,6 +29,7 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menu_bar)
         self.setStatusBar(self.status_bar)
 
+        self.main_layout.addWidget(self.preprocessor)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
@@ -34,11 +38,10 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     import sys
-    from PyQt5.QtWinExtras import QtWin
+    from PyQt5.QtWinExtras import QtWin  # !!!
 
     myappid = 'mycompany.myproduct.subproduct.version'
     QtWin.setCurrentProcessExplicitAppUserModelID(myappid) # noqa
-
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("images/window_icon.png"))
     window = MainWindow()
