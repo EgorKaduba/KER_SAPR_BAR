@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QSplitter
 from PyQt5.QtCore import Qt
 
-from preprocessor_dir.preprocessor_widgets.table import Table
+from preprocessor_dir.preprocessor_widgets.table_widget.table import Table
 from preprocessor_dir.preprocessor_widgets.graphics import Graphics
 
 

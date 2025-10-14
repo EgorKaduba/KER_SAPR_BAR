@@ -1,5 +1,7 @@
-from PyQt5.QtWidgets import QTableWidget, QPushButton, QSizePolicy
+from PyQt5.QtWidgets import QTableWidget, QPushButton, QAbstractItemView
 from PyQt5.QtCore import Qt
+
+from preprocessor_dir.preprocessor_widgets.table_widget.tableDelegat import TableDelegate
 
 
 class Table(QTableWidget):
@@ -27,9 +29,24 @@ class Table(QTableWidget):
         self.setHorizontalHeaderLabels(self.types[self.type]["HeaderLabels"])
         self.setStyleSheet("background-color: white; color: black;")
         self.horizontalHeader().setStretchLastSection(True)
+        self.setSelectionMode(QAbstractItemView.NoSelection) # noqa
         for column in range(self.columnCount()):
             self.setColumnWidth(column, int(self.types[self.type]["ColumnsWidth"][column]))
         self.add_button_row()
+        self.set_delegate()
+
+    def set_delegate(self):
+        if self.type == "bar":
+            self.setItemDelegate(TableDelegate(parent=self, column_type={"type": "float", "plus": True}))
+        if self.type == "concentrated_loads":
+            self.setItemDelegateForColumn(0, TableDelegate(parent=self, column_type={"type": "int", "plus": True}))
+            self.setItemDelegateForColumn(1,
+                                          TableDelegate(parent=self, column_type={"type": "float", "plus": False}))
+        if self.type == "ddistributed_loads":
+            self.setItemDelegateForColumn(0, TableDelegate(parent=self, column_type={"type": "int", "plus": True}))
+            self.setItemDelegateForColumn(1,
+                                          TableDelegate(parent=self, column_type={"type": "float", "plus": False}))
+
 
     def get_info(self):
         for row in range(self.rowCount() - 1):
