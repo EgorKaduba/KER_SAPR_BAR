@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
 
     def setup_window_settings(self):
         self.setWindowTitle("KER-SAPR_BAR")
-        icon = QIcon("images/window_icon.png")
+        icon = QIcon("images/icons/window_icon.png")
         self.setWindowIcon(icon)
         self.resize(QSize(1280, 720))
 
@@ -36,18 +36,15 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.setFocus()
 
-    def get_all_info(self):
-        return self.preprocessor.get_all_info()
-
 
 if __name__ == "__main__":
     import sys
     from PyQt5.QtWinExtras import QtWin  # !!!
 
     myappid = 'mycompany.myproduct.subproduct.version'
-    QtWin.setCurrentProcessExplicitAppUserModelID(myappid) # noqa
+    QtWin.setCurrentProcessExplicitAppUserModelID(myappid)  # noqa
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon("images/window_icon.png"))
+    app.setWindowIcon(QIcon("images/icons/window_icon.png"))
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

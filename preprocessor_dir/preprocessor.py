@@ -38,3 +38,8 @@ class Preprocessor(QWidget):
         info = [self.bar_table.get_info(), self.concentrated_loads_table.get_info(),
                 self.distributed_loads_table.get_info()]
         return {"Objects": info}
+
+    def filling_from_file(self, info: dict):
+        self.bar_table.filling_from_file(info["Objects"][0])
+        self.concentrated_loads_table.filling_from_file(info["Objects"][1])
+        self.distributed_loads_table.filling_from_file(info["Objects"][2])

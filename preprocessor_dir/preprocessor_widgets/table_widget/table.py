@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QTableWidget, QPushButton, QAbstractItemView
+from PyQt5.QtWidgets import QTableWidget, QPushButton, QAbstractItemView, QTableWidgetItem
 from PyQt5.QtCore import Qt
 
 from preprocessor_dir.preprocessor_widgets.table_widget.tableDelegat import TableDelegate
@@ -64,22 +64,34 @@ class Table(QTableWidget):
                 row_data = dict()
                 for column in range(self.columnCount()):
                     item = self.item(row, column)
-                    if item is not None and item.text():
-                        num = item.text()
-                        try:
-                            if "," in num:
-                                num = float(num.replace(",", "."))
-                            else:
-                                num = int(num)
-                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
-                        except ValueError:
-                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
-                    else:
-                        row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = 1
+                    num = item.text()
+                    try:
+                        if "," in num:
+                            num = float(num.replace(",", "."))
+                        else:
+                            num = int(num)
+                        row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
+                    except ValueError:
+                        row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
                 data["info"].append(row_data)
                 data["count"] += 1
             return data
         return None
+
+    def filling_from_file(self, info: dict):
+        row_count = info["count"]
+        self.removeRow(self.rowCount() - 1)
+        self.setRowCount(row_count)
+        for row in range(row_count):
+            for column in range(self.columnCount()):
+                if self.item(row, column) is None:
+                    self.setItem(row, column, QTableWidgetItem())
+                column_name = self.types[self.type]["HeaderLabelsInfo"][column]
+                value = info["info"][row].get(column_name)
+                if isinstance(value, (int, float)):
+                    value = str(value)
+                self.item(row, column).setText(value)
+        self.add_button_row()
 
     def add_data_row(self):
         row = self.rowCount()

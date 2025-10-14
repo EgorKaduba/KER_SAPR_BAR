@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QStyledItemDelegate, QLineEdit
 from PyQt5.QtGui import QDoubleValidator, QIntValidator
+from PyQt5.QtCore import Qt
 
 
 class TableDelegate(QStyledItemDelegate):
@@ -9,6 +10,7 @@ class TableDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         editor = QLineEdit(parent)
+        editor.setAlignment(Qt.AlignHCenter)
         validator = None
         if self.column_type["type"] == "int":
             validator = QIntValidator()
