@@ -33,3 +33,8 @@ class Preprocessor(QWidget):
         self.splitter.setSizes([600, 300])
         self.main_layout.addWidget(self.splitter)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+    def get_all_info(self):
+        info = [self.bar_table.get_info(), self.concentrated_loads_table.get_info(),
+                self.distributed_loads_table.get_info()]
+        return {"Objects": info}

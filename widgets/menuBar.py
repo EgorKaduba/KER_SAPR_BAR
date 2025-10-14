@@ -1,6 +1,11 @@
+import json
+
 from PyQt5.QtWidgets import QMenuBar, QMenu, QAction
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
+
+from widgets.fileDialog import FileDialog
+from widgets.manual import Manual
 
 class MenuBar(QMenuBar):
     def __init__(self, parent=None):
@@ -37,11 +42,33 @@ class MenuBar(QMenuBar):
         self.addMenu(reference_menu)
 
     def save_file(self):
-        self.parent.status_bar.showMessage("Файл сохранён", msecs=3000)
+        if not self.parent.file_path:
+            dialog = FileDialog(dialog_type="save")
+            if dialog.file_path:
+                open(dialog.file_path, "a").close()
+                info = self.parent.get_all_info()
+                if all(info["Objects"]):
+                    try:
+                        with open(dialog.file_path, "w") as file:
+                            json_data = json.dumps(info)
+                            file.write(json_data)
+                        self.parent.status_bar.showMessage(f"Файл {dialog.file_path} сохранён", msecs=4000)
+                    except Exception as error_msg:
+                        self.parent.status_bar.showMessage(f"{error_msg}", msecs=4000)
+            else:
+                self.parent.status_bar.showMessage(f"Ошибка сохранения файла", msecs=4000)
 
     def open_file(self):
-        filename = "test.json"
-        self.parent.status_bar.showMessage(f"Файл {filename} открыт", msecs=3000)
+        dialog = FileDialog(dialog_type="open")
+        if dialog.file_path:
+            self.parent.status_bar.showMessage(f"Файл {dialog.file_path} открыт", msecs=4000)
+        else:
+            self.parent.status_bar.showMessage(f"Ошибка открытия файла", msecs=4000)
 
     def open_manual(self):
+        manual = Manual(parent=self)
         self.parent.status_bar.showMessage(f"Открыто руководство", msecs=0)
+        manual.show()
+
+    def close_manual(self):
+        self.parent.status_bar.showMessage(f"Руководство закрыто", msecs=3000)

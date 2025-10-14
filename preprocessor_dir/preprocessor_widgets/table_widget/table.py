@@ -9,15 +9,18 @@ class Table(QTableWidget):
         "bar": {
             "HeaderLabels": ["Длина, L [м]", "Поперечное сечение, А [м²]", "Модуль упругости E, Па",
                              "Напряжение [σ], Па"],
-            "ColumnsWidth": [100, 170, 155, 135]
+            "ColumnsWidth": [100, 170, 155, 135],
+            "HeaderLabelsInfo": ["length", "square", "modulus_elasticity", "voltage"]
         },
         "concentrated_loads": {
             "HeaderLabels": ["Номер узла", "Сила, F [H]"],
-            "ColumnsWidth": [150, 160]
+            "ColumnsWidth": [150, 160],
+            "HeaderLabelsInfo": ["node_number", "power"]
         },
         "distributed_loads": {
             "HeaderLabels": ["Номер узла", "Сила, q [H]"],
-            "ColumnsWidth": [150 ,160]
+            "ColumnsWidth": [150 ,160],
+            "HeaderLabelsInfo": ["node_number", "power"]
         }
     }
     def __init__(self, table_type: str = "bar", parent=None):
@@ -42,16 +45,41 @@ class Table(QTableWidget):
             self.setItemDelegateForColumn(0, TableDelegate(parent=self, column_type={"type": "int", "plus": True}))
             self.setItemDelegateForColumn(1,
                                           TableDelegate(parent=self, column_type={"type": "float", "plus": False}))
-        if self.type == "ddistributed_loads":
+            self.verticalHeader().hide()
+        if self.type == "distributed_loads":
             self.setItemDelegateForColumn(0, TableDelegate(parent=self, column_type={"type": "int", "plus": True}))
             self.setItemDelegateForColumn(1,
                                           TableDelegate(parent=self, column_type={"type": "float", "plus": False}))
+            self.verticalHeader().hide()
 
 
     def get_info(self):
-        for row in range(self.rowCount() - 1):
-            for column in range(self.columnCount()):
-                print(row, column)
+        if self.rowCount() - 1:
+            data = {
+                "type": self.type,
+                "count": 0,
+                "info": []
+            }
+            for row in range(self.rowCount() - 1):
+                row_data = dict()
+                for column in range(self.columnCount()):
+                    item = self.item(row, column)
+                    if item is not None and item.text():
+                        num = item.text()
+                        try:
+                            if "," in num:
+                                num = float(num.replace(",", "."))
+                            else:
+                                num = int(num)
+                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
+                        except ValueError:
+                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
+                    else:
+                        row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = 1
+                data["info"].append(row_data)
+                data["count"] += 1
+            return data
+        return None
 
     def add_data_row(self):
         row = self.rowCount()

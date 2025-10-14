@@ -18,6 +18,7 @@ class MainWindow(QMainWindow):
         self.main_layout = QHBoxLayout()
         self.preprocessor = Preprocessor()
         self.setup_ui()
+        self.file_path = None
 
     def setup_window_settings(self):
         self.setWindowTitle("KER-SAPR_BAR")
@@ -34,6 +35,9 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
         self.setFocus()
+
+    def get_all_info(self):
+        return self.preprocessor.get_all_info()
 
 
 if __name__ == "__main__":
