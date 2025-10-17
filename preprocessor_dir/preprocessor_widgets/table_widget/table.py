@@ -62,20 +62,29 @@ class Table(QTableWidget):
             }
             for row in range(self.rowCount() - 1):
                 row_data = dict()
+                row_is_empty = True
+
                 for column in range(self.columnCount()):
                     item = self.item(row, column)
-                    num = item.text()
-                    try:
-                        if "," in num:
-                            num = float(num.replace(",", "."))
-                        else:
-                            num = int(num)
-                        row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
-                    except ValueError:
-                        row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
-                data["info"].append(row_data)
-                data["count"] += 1
-            return data
+                    if item and item.text().strip():
+                        num = item.text().strip()
+                        try:
+                            if "," in num:
+                                num = float(num.replace(",", "."))
+                            else:
+                                num = float(num) if "." in num else int(num)
+                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
+                            row_is_empty = False
+                        except ValueError:
+                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
+                            row_is_empty = False
+
+                # Добавляем только непустые строки
+                if not row_is_empty:
+                    data["info"].append(row_data)
+                    data["count"] += 1
+
+            return data if data["count"] > 0 else None
         return None
 
     def filling_from_file(self, info: dict):

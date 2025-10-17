@@ -1,0 +1,56 @@
+{
+  "Objects": [
+    {
+      "type": "bar",
+      "count": 3,
+      "info": [
+        {
+          "length": 2,
+          "square": 2,
+          "modulus_elasticity": 17,
+          "voltage": 17
+        },
+        {
+          "length": 2,
+          "square": 3,
+          "modulus_elasticity": 17,
+          "voltage": 17
+        },
+        {
+          "length": 1,
+          "square": 1,
+          "modulus_elasticity": 17,
+          "voltage": 17
+        }
+      ]
+    },
+    {
+      "type": "concentrated_loads",
+      "count": 2,
+      "info": [
+        {
+          "node_number": 1,
+          "power": 5
+        },
+        {
+          "node_number": 2,
+          "power": -2
+        }
+      ]
+    },
+    {
+      "type": "distributed_loads",
+      "count": 2,
+      "info": [
+        {
+          "node_number": 1,
+          "power": 2
+        },
+        {
+          "node_number": 3,
+          "power": 1
+        }
+      ]
+    }
+  ]
+}

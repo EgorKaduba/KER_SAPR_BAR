@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 
 from widgets.fileDialog import FileDialog
 from widgets.manual import Manual
+from widgets.validators import DataValidator
 
 class MenuBar(QMenuBar):
     def __init__(self, parent=None):
@@ -45,12 +46,19 @@ class MenuBar(QMenuBar):
         if not self.parent.file_path:
             dialog = FileDialog(dialog_type="save")
             if dialog.file_path:
-                open(dialog.file_path, "a").close()
+                # ВАЛИДАЦИЯ ПЕРЕД СОХРАНЕНИЕМ
                 info = self.parent.preprocessor.get_all_info()
+                validation_errors = DataValidator.validate_all_data(info)
+
+                if validation_errors:
+                    error_msg = "Ошибки валидации:\n" + "\n".join(validation_errors)
+                    self.parent.status_bar.showMessage(f"Ошибки в данных: {error_msg}", msecs=8000)
+                    return
+
                 if all(info["Objects"]):
                     try:
                         with open(dialog.file_path, "w") as file:
-                            json_data = json.dumps(info)
+                            json_data = json.dumps(info, ensure_ascii=False, indent=2)
                             file.write(json_data)
                         self.parent.status_bar.showMessage(f"Файл {dialog.file_path} сохранён", msecs=4000)
                     except Exception as error_msg:
@@ -61,13 +69,26 @@ class MenuBar(QMenuBar):
     def open_file(self):
         dialog = FileDialog(dialog_type="open")
         if dialog.file_path:
-            info_dict = None
-            with open(dialog.file_path, "r") as file:
-                json_data = file.read()
-                info_dict = json.loads(json_data)
-            if info_dict:
-                self.parent.preprocessor.filling_from_file(info_dict)
-            self.parent.status_bar.showMessage(f"Файл {dialog.file_path} открыт", msecs=4000)
+            try:
+                with open(dialog.file_path, "r") as file:
+                    json_data = file.read()
+                    info_dict = json.loads(json_data)
+
+                # ВАЛИДАЦИЯ ПРИ ОТКРЫТИИ
+                validation_errors = DataValidator.validate_all_data(info_dict)
+                if validation_errors:
+                    error_msg = "Ошибки в файле:\n" + "\n".join(validation_errors[:5])  # Показываем первые 5 ошибок
+                    self.parent.status_bar.showMessage(f"Ошибки валидации: {error_msg}", msecs=8000)
+                    # Можно спросить пользователя, хочет ли он все равно загрузить файл
+                    # Пока просто не загружаем
+                    return
+
+                if info_dict:
+                    self.parent.preprocessor.filling_from_file(info_dict)
+                    self.parent.status_bar.showMessage(f"Файл {dialog.file_path} открыт", msecs=4000)
+
+            except Exception as e:
+                self.parent.status_bar.showMessage(f"Ошибка чтения файла: {str(e)}", msecs=4000)
         else:
             self.parent.status_bar.showMessage(f"Ошибка открытия файла", msecs=4000)
 

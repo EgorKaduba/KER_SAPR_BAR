@@ -8,8 +8,8 @@ class FileDialog(QFileDialog):
         self.file_path = None
         path = ""
         if dialog_type == "open":
-            path = self.getOpenFileName(filter="*.json")
+            path = self.getOpenFileName(caption="KER-SAPR-BAR Open File", directory="./tests", filter="*.json")
         elif dialog_type == "save":
-            path = self.getSaveFileName(filter="*.json")
+            path = self.getSaveFileName(caption="KER-SAPR-BAR Save File", directory="./tests", filter="*.json")
         if path:
             self.file_path = path[0]
