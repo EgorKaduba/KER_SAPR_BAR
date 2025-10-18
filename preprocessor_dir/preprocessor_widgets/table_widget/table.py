@@ -78,8 +78,6 @@ class Table(QTableWidget):
                         except ValueError:
                             row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
                             row_is_empty = False
-
-                # Добавляем только непустые строки
                 if not row_is_empty:
                     data["info"].append(row_data)
                     data["count"] += 1
