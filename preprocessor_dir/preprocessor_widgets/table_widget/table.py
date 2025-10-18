@@ -19,20 +19,24 @@ class Table(QTableWidget):
         },
         "distributed_loads": {
             "HeaderLabels": ["Номер узла", "Сила, q [H]"],
-            "ColumnsWidth": [150 ,160],
+            "ColumnsWidth": [150, 160],
             "HeaderLabelsInfo": ["node_number", "power"]
         }
     }
+
     def __init__(self, table_type: str = "bar", parent=None):
         QTableWidget.__init__(self, parent)
+        self.parent = parent
         self.type = table_type
+        self.suppress_item_changed = False
         self.setColumnCount(len(self.types[self.type]["HeaderLabels"]))
         self.setRowCount(0)
         self.setMinimumWidth(sum(self.types[self.type]["ColumnsWidth"]) + 20)
         self.setHorizontalHeaderLabels(self.types[self.type]["HeaderLabels"])
         self.setStyleSheet("background-color: white; color: black;")
         self.horizontalHeader().setStretchLastSection(True)
-        self.setSelectionMode(QAbstractItemView.NoSelection) # noqa
+        self.setSelectionMode(QAbstractItemView.NoSelection)  # noqa
+        self.itemChanged.connect(self.on_item_changed)
         for column in range(self.columnCount()):
             self.setColumnWidth(column, int(self.types[self.type]["ColumnsWidth"][column]))
         self.add_button_row()
@@ -51,7 +55,6 @@ class Table(QTableWidget):
             self.setItemDelegateForColumn(1,
                                           TableDelegate(parent=self, column_type={"type": "float", "plus": False}))
             self.verticalHeader().hide()
-
 
     def get_info(self):
         if self.rowCount() - 1:
@@ -103,6 +106,14 @@ class Table(QTableWidget):
     def add_data_row(self):
         row = self.rowCount()
         self.insertRow(row)
+        self.suppress_item_changed = True
+        for column in range(self.columnCount()):
+            item = QTableWidgetItem("1")
+            item.setTextAlignment(Qt.AlignCenter)
+            self.setItem(row, column, item)
+        if self.type == "bar":
+            self.parent.graphics.scene.add_bar()
+        self.suppress_item_changed = False
 
     def add_button_row(self):
         row = self.rowCount()
@@ -111,13 +122,12 @@ class Table(QTableWidget):
         add_btn = QPushButton()
         add_btn.setStyleSheet("border: none;")
         add_btn.setText("+")
-        add_btn.clicked.connect(self.add_new_row) # noqa
+        add_btn.clicked.connect(self.add_new_row)  # noqa
 
         self.setCellWidget(row, 0, add_btn)
 
     def add_new_row(self):
         row = self.rowCount() - 1
-        self.clearSpans()
         self.removeRow(row)
         self.add_data_row()
         self.add_button_row()
@@ -132,3 +142,13 @@ class Table(QTableWidget):
         row = self.currentRow()
         if (row >= 0) and (row < (self.rowCount() - 1)):
             self.removeRow(row)
+            self.parent.graphics.scene.remove_bar(row)
+
+    def on_item_changed(self, item):
+        """Вызывается при изменении конкретного item"""
+        if (item.row() == self.rowCount() - 1) and self.type != "bar":
+            return
+        if self.suppress_item_changed:
+            return
+        self.parent.graphics.scene.resize_bar(bar_id=item.row(), new_length=int(self.item(item.row(), 0).text()),
+                                              new_height=int(self.item(item.row(), 1).text()))

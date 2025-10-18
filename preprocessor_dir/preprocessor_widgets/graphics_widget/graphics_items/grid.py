@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QGraphicsItem
 from PyQt5.QtCore import Qt, QRectF
-from PyQt5.QtGui import QPen
+from PyQt5.QtGui import QPen, QColor
 
 
 class GridItem(QGraphicsItem):
@@ -10,18 +10,18 @@ class GridItem(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemDoesntPropagateOpacityToChildren)
 
     def boundingRect(self):
-        return QRectF(-1000, -1000, 2000, 2000)
+        return QRectF(-10000, -10000, 20000, 20000)
 
     def paint(self, painter, option, widget):
 
-        pen = QPen(Qt.lightGray)
+        pen = QPen(QColor("#f5f3f0"))
         pen.setWidth(0)
         painter.setPen(pen)
 
-        left = -1000
-        top = -1000
-        right = 1000
-        bottom = 1000
+        left = -10000
+        top = -10000
+        right = 10000
+        bottom = 10000
 
         x = left
         while x <= right:

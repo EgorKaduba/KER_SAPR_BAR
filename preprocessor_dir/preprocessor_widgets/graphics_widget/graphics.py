@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGraphicsView
-from PyQt5.QtGui import QBrush, QWheelEvent, QPainter
+from PyQt5.QtGui import QBrush, QWheelEvent, QPainter, QMouseEvent
 
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_scene import GraphicsScene
 
@@ -14,13 +14,9 @@ class Graphics(QGraphicsView):
         self.setMinimumHeight(400)
         self.setRenderHint(QPainter.Antialiasing)
         self.setDragMode(QGraphicsView.RubberBandDrag)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.setStyleSheet("QScrollBar { width: 0px; height: 0px; }")
         self.view_scale = 1
-        self.setup_view()
-
-    def setup_view(self):
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
 
     def wheelEvent(self, event: QWheelEvent):
         zoom_factor = 1.15
@@ -28,6 +24,30 @@ class Graphics(QGraphicsView):
             self.scale(zoom_factor, zoom_factor)
             self.view_scale *= 1.15
         else:
-            if self.view_scale >= 0.75:
+            if self.view_scale >= 0.33:
                 self.scale(1 / zoom_factor, 1 / zoom_factor)
                 self.view_scale /= 1.15
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MiddleButton:
+            self.setDragMode(QGraphicsView.ScrollHandDrag)
+            fake_event = QMouseEvent(
+                event.type(), event.localPos(), event.screenPos(),
+                Qt.LeftButton, Qt.LeftButton, event.modifiers()
+            )
+            super().mousePressEvent(fake_event)
+        else:
+            super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MiddleButton:
+            self.setDragMode(QGraphicsView.RubberBandDrag)
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Space:
+            self.resetTransform()
+            self.centerOn(0, 0)
+            self.view_scale = 1
+        else:
+            super().keyPressEvent(event)

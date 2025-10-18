@@ -34,7 +34,6 @@ class MainWindow(QMainWindow):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
-        self.setFocus()
 
 
 if __name__ == "__main__":

@@ -11,9 +11,9 @@ class Preprocessor(QWidget):
         self.setStyleSheet("background-color: #d5dbe3;")
         self.main_layout = QHBoxLayout(self)
         self.splitter = QSplitter(Qt.Vertical)
-        self.bar_table = Table("bar")
-        self.concentrated_loads_table = Table("concentrated_loads")
-        self.distributed_loads_table = Table("distributed_loads")
+        self.bar_table = Table("bar", parent=self)
+        self.concentrated_loads_table = Table("concentrated_loads", parent=self)
+        self.distributed_loads_table = Table("distributed_loads", parent=self)
         self.graphics = Graphics()
         self.setup_ui()
 
