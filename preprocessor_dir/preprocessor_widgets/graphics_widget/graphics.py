@@ -20,22 +20,30 @@ class Graphics(QGraphicsView):
         self.setStyleSheet("QScrollBar { width: 0px; height: 0px; }")
         self.view_scale = 1
         self.add_sealing_checkbox()
-
-        # Включаем отслеживание мыши для тултипов
         self.setMouseTracking(True)
         self.viewport().setMouseTracking(True)
 
     def add_sealing_checkbox(self):
-        checkbox_widget = QWidget(self)
-        checkbox_widget.setStyleSheet("background-color: rgba(255,255,255,200);")
-
-        layout = QHBoxLayout(checkbox_widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.sealing_group = CheckBoxGroup(self)  # Сохраняем ссылку
+        self.checkbox_widget = QWidget(self)
+        self.checkbox_widget.setStyleSheet("background-color: rgba(255,255,255,50);")
+        self.checkbox_widget.setFixedSize(140, 50)
+        layout = QHBoxLayout(self.checkbox_widget)
+        layout.setContentsMargins(5, 5, 5, 5)
+        self.sealing_group = CheckBoxGroup(self)
         layout.addWidget(self.sealing_group)
+        self.update_checkbox_position()
 
-        checkbox_widget.move(10, 380)
-        checkbox_widget.resize(140, 50)
+    def update_checkbox_position(self):
+        """Обновляет позицию чекбоксов при изменении размера"""
+        margin = 10
+        x = margin
+        y = self.height() - self.checkbox_widget.height() - margin
+        self.checkbox_widget.move(x, y)
+
+    def resizeEvent(self, event):
+        """Обрабатывает изменение размера окна"""
+        super().resizeEvent(event)
+        self.update_checkbox_position()
 
     def set_supports_states(self, left_visible, right_visible):
         """Устанавливает состояния чекбоксов заделок"""

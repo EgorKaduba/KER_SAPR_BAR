@@ -4,6 +4,7 @@ from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.grid i
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.bar import BarItem
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.sealing import Sealing
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.concentrated_load import ConcentratedLoadItem
+from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.distributed_load import DistributedLoadItem
 
 
 class GraphicsScene(QGraphicsScene):
@@ -12,9 +13,11 @@ class GraphicsScene(QGraphicsScene):
         self.add_grid()
         self.bars: list[BarItem] = list()
         self.concentrated_loads: list[ConcentratedLoadItem] = list()
+        self.distributed_loads: list[DistributedLoadItem] = list()
         self.last_x = -500
         self.left_sealing = Sealing(-501, -100, 200, "left")
         self.right_sealing = Sealing(-499, -100, 200, "right")
+        self.display_scale = 100
         self.addItem(self.left_sealing)
         self.addItem(self.right_sealing)
         self.left_sealing.hide()
@@ -27,9 +30,9 @@ class GraphicsScene(QGraphicsScene):
     def add_bar(self, length: float = 1, height: float = 1, modulus_elasticity: float = 1, voltage: float = 1):
         display_length = self._limit_length(length)
         display_height = self._limit_height(height)
-        bar_width = display_length * 100
-        bar_height = display_height * 100
-        bar = BarItem(self.last_x, -bar_height / 2, bar_width, bar_height)
+        bar_width = int(display_length * self.display_scale)
+        bar_height = int(display_height * self.display_scale)
+        bar = BarItem(self.last_x, int(-bar_height / 2), bar_width, bar_height)
         bar.set_properties(length, height, modulus_elasticity, voltage)
         self.last_x += bar_width
         self.bars.append(bar)
@@ -47,8 +50,8 @@ class GraphicsScene(QGraphicsScene):
         bar = self.bars[bar_id]
         old_width = bar.rect().width()
         current_x = bar.rect().x()
-        new_width = display_length * 100
-        new_height_px = display_height * 100
+        new_width = display_length * self.display_scale
+        new_height_px = display_height * self.display_scale
 
         bar.prepareGeometryChange()
         bar.setRect(current_x, -new_height_px / 2, new_width, new_height_px)
@@ -72,6 +75,7 @@ class GraphicsScene(QGraphicsScene):
         self.last_x = current_x
         self.right_sealing.setX(self.last_x)
         self.update_loads_positions()
+        self.update_distributed_loads_positions()
 
     def _limit_length(self, length: float) -> float:
         """Ограничивает длину стержня для отображения"""
@@ -87,11 +91,12 @@ class GraphicsScene(QGraphicsScene):
 
         bar_to_remove = self.bars[bar_id]
         self.remove_bar_loads(bar_id)
+        self.remove_distributed_load(bar_id)
         self.removeItem(bar_to_remove)
         self.bars.pop(bar_id)
         self.update_loads_node_numbers_after_removal(bar_id)
+        self.update_distributed_loads_node_numbers_after_removal(bar_id)
         current_x = -500
-
         for bar in self.bars:
             bar.prepareGeometryChange()
             current_width = bar.rect().width()
@@ -101,21 +106,18 @@ class GraphicsScene(QGraphicsScene):
         self.last_x = current_x
         self.right_sealing.setX(self.last_x)
         self.update_loads_positions()
+        self.update_distributed_loads_positions()
 
     def remove_bar_loads(self, bar_id: int):
         """Удаляет все нагрузки, связанные с удаляемым стержнем"""
-        loads_to_remove = []
-        for load in self.concentrated_loads:
-            if load.node_number == bar_id + 1 or load.node_number == bar_id + 2:
-                loads_to_remove.append(load)
-        for load in loads_to_remove:
-            self.removeItem(load)
-            self.concentrated_loads.remove(load)
+        pass
 
     def update_loads_node_numbers_after_removal(self, removed_bar_id: int):
         """Обновляет номера узлов у нагрузок после удаления стержня"""
         for load in self.concentrated_loads:
-            if load.node_number > removed_bar_id + 1:
+            if load.node_number == removed_bar_id + 2:
+                load.node_number = removed_bar_id + 1
+            elif load.node_number > removed_bar_id + 2:
                 load.node_number -= 1
 
     def changed_left_sealing(self, visible: bool = True):
@@ -168,7 +170,65 @@ class GraphicsScene(QGraphicsScene):
             self.removeItem(bar)
         self.bars.clear()
         self.clear_concentrated_loads()
+        self.clear_distributed_loads()
         self.last_x = -500
         self.right_sealing.setX(self.last_x + 1)
         self.left_sealing.setVisible(left_visible)
         self.right_sealing.setVisible(right_visible)
+
+    def clear_distributed_loads(self):
+        """Удаляет все распределенные нагрузки"""
+        for load in self.distributed_loads:
+            self.removeItem(load)
+        self.distributed_loads.clear()
+
+    def add_distributed_load(self, bar_id: int, power: float):
+        """Добавляет распределенную нагрузку на стержень"""
+        if bar_id < 0 or bar_id >= len(self.bars):
+            return
+        bar = self.bars[bar_id]
+        bar_rect = bar.rect()
+        self.remove_distributed_load(bar_id)
+        load = DistributedLoadItem(
+            bar_id=bar_id,
+            power=power,
+            bar_start_x=bar_rect.x(),
+            bar_length=bar_rect.width(),
+            bar_height=bar_rect.height()
+        )
+        self.distributed_loads.append(load)
+        self.addItem(load)
+
+    def remove_distributed_load(self, bar_id: int):
+        """Удаляет распределенную нагрузку со стержня"""
+        loads_to_remove = [load for load in self.distributed_loads if load.bar_id == bar_id]
+        for load in loads_to_remove:
+            self.removeItem(load)
+            self.distributed_loads.remove(load)
+
+    def update_distributed_loads_positions(self):
+        """Обновляет позиции всех распределенных нагрузок при изменении стержней"""
+        for load in self.distributed_loads:
+            if load.bar_id < len(self.bars):
+                bar = self.bars[load.bar_id]
+                bar_rect = bar.rect()
+                load.update_position(bar_rect.x(), bar_rect.width(), bar_rect.height())
+
+    def update_distributed_loads_node_numbers_after_removal(self, removed_bar_id: int):
+        """Обновляет номера стержней у распределенных нагрузок после удаления стержня"""
+        loads_to_remove = []
+        loads_to_update = []
+        for load in self.distributed_loads:
+            if load.bar_id == removed_bar_id:
+                loads_to_remove.append(load)
+            elif load.bar_id > removed_bar_id:
+                load.bar_id -= 1
+                loads_to_update.append(load)
+        for load in loads_to_remove:
+            self.removeItem(load)
+            self.distributed_loads.remove(load)
+        for load in loads_to_update:
+            if load.bar_id < len(self.bars):
+                bar = self.bars[load.bar_id]
+                bar_rect = bar.rect()
+                load.update_position(bar_rect.x(), bar_rect.width(), bar_rect.height())

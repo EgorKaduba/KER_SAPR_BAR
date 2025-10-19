@@ -75,6 +75,7 @@ class Preprocessor(QWidget):
             self.graphics.scene.changed_right_sealing(right_support)
             self.graphics.set_supports_states(left_support, right_support)
         self.update_concentrated_loads_display()
+        self.update_distributed_loads_display()
 
     def update_concentrated_loads_display(self):
         """Обновляет отображение сосредоточенных нагрузок на сцене"""
@@ -96,30 +97,36 @@ class Preprocessor(QWidget):
             new_concentrated_info = []
             for load in concentrated_data["info"]:
                 node_num = load.get("node_number")
-                if node_num != removed_bar_id + 1 and node_num != removed_bar_id + 2:
-                    if node_num > removed_bar_id + 2:
-                        load["node_number"] = node_num - 1
+                if node_num == removed_bar_id + 2:
+                    load["node_number"] = removed_bar_id + 1
+                    new_concentrated_info.append(load)
+                elif node_num > removed_bar_id + 2:
+                    load["node_number"] = node_num - 1
+                    new_concentrated_info.append(load)
+                else:
                     new_concentrated_info.append(load)
             self.concentrated_loads_table.filling_from_file({
                 "type": "concentrated_loads",
                 "count": len(new_concentrated_info),
                 "info": new_concentrated_info
             })
-        distributed_data = self.distributed_loads_table.get_info()
-        if distributed_data and distributed_data["info"]:
-            new_distributed_info = []
-            for load in distributed_data["info"]:
-                node_num = load.get("node_number")
-                if node_num != removed_bar_id + 1:
-                    if node_num > removed_bar_id + 1:
-                        load["node_number"] = node_num - 1
-                    new_distributed_info.append(load)
-            self.distributed_loads_table.filling_from_file({
-                "type": "distributed_loads",
-                "count": len(new_distributed_info),
-                "info": new_distributed_info
-            })
 
     def refresh_all_loads(self):
         """Полностью обновляет все нагрузки (используется при изменении стержней)"""
         self.update_concentrated_loads_display()
+        self.update_concentrated_loads_display()
+        self.update_distributed_loads_display()
+
+    def update_distributed_loads_display(self):
+        """Обновляет отображение распределенных нагрузок на сцене"""
+        self.graphics.scene.clear_distributed_loads()
+        if not self.graphics.scene.bars:
+            return
+
+        distributed_data = self.distributed_loads_table.get_info()
+        if distributed_data and distributed_data["info"]:
+            for load in distributed_data["info"]:
+                bar_num = load.get("node_number") - 1
+                power = load.get("power")
+                if bar_num is not None and power is not None and 0 <= bar_num < len(self.graphics.scene.bars):
+                    self.graphics.scene.add_distributed_load(bar_num, power)

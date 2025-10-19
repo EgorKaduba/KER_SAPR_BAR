@@ -8,8 +8,8 @@ class BarItem(QGraphicsRectItem):
         self.length = length
         self.height = height
         self.scene = parent
-        self.real_length = length / 100.0
-        self.real_height = height / 100.0
+        self.real_length = 0
+        self.real_height = 0
         self.setAcceptHoverEvents(True)
         self.modulus_elasticity = 0
         self.voltage = 0

@@ -23,14 +23,27 @@ class DataValidator:
         errors = []
         if not loads_data:
             return errors
+
         load_name = "сосредоточенной" if load_type == "concentrated" else "распределенной"
+
         for i, load in enumerate(loads_data["info"]):
             node_num = load.get("node_number")
-            if node_num is None:
-                errors.append(f"{load_name.capitalize()} нагрузка {i + 1}: Отсутствует номер узла")
-            elif not isinstance(node_num, int) or node_num <= 0 or node_num > bar_count + 1:
-                errors.append(
-                    f"{load_name.capitalize()} нагрузка {i + 1}: Номер узла {node_num} не существует (должен быть от 1 до {bar_count + 1})")
+
+            if load_type == "concentrated":
+                # Для сосредоточенных - проверка узлов (от 1 до bar_count + 1)
+                if node_num is None:
+                    errors.append(f"{load_name.capitalize()} нагрузка {i + 1}: Отсутствует номер узла")
+                elif not isinstance(node_num, int) or node_num <= 0 or node_num > bar_count + 1:
+                    errors.append(
+                        f"{load_name.capitalize()} нагрузка {i + 1}: Номер узла {node_num} не существует (должен быть от 1 до {bar_count + 1})")
+            else:
+                # Для распределенных - проверка стержней (от 1 до bar_count)
+                if node_num is None:
+                    errors.append(f"{load_name.capitalize()} нагрузка {i + 1}: Отсутствует номер стержня")
+                elif not isinstance(node_num, int) or node_num <= 0 or node_num > bar_count:
+                    errors.append(
+                        f"{load_name.capitalize()} нагрузка {i + 1}: Номер стержня {node_num} не существует (должен быть от 1 до {bar_count})")
+
             if "power" not in load:
                 errors.append(f"{load_name.capitalize()} нагрузка {i + 1}: Отсутствует значение силы")
 

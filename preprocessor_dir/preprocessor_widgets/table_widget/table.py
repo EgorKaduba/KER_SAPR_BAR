@@ -162,6 +162,9 @@ class Table(QTableWidget):
         if self.type == "concentrated_loads":
             if self.parent.graphics.scene.bars:
                 self.parent.update_concentrated_loads_display()
+        elif self.type == "distributed_loads":  # ДОБАВЬТЕ ЭТОТ БЛОК
+            if self.parent.graphics.scene.bars:
+                self.parent.update_distributed_loads_display()
         elif self.type == "bar":
             self.parent.refresh_all_loads()
 
@@ -180,6 +183,8 @@ class Table(QTableWidget):
                 self.parent.update_loads_tables_after_bar_removal(row)
             elif self.type == "concentrated_loads":
                 self.parent.update_concentrated_loads_display()
+            elif self.type == "distributed_loads":  # ДОБАВЬТЕ ЭТОТ БЛОК
+                self.parent.update_distributed_loads_display()
 
     def on_item_changed(self, item):
         if (item.row() == self.rowCount() - 1) or self.suppress_item_changed:
@@ -215,3 +220,7 @@ class Table(QTableWidget):
             self.parent.refresh_all_loads()
         elif self.type == "concentrated_loads":
             self.parent.update_concentrated_loads_display()
+        elif self.type == "concentrated_loads":
+            self.parent.update_concentrated_loads_display()
+        elif self.type == "distributed_loads":
+            self.parent.update_distributed_loads_display()
