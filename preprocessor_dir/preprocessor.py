@@ -89,6 +89,37 @@ class Preprocessor(QWidget):
                 if node_num is not None and power is not None:
                     self.graphics.scene.add_concentrated_load(node_num, power)
 
+    def update_loads_tables_after_bar_removal(self, removed_bar_id: int):
+        """Обновляет таблицы нагрузок после удаления стержня"""
+        concentrated_data = self.concentrated_loads_table.get_info()
+        if concentrated_data and concentrated_data["info"]:
+            new_concentrated_info = []
+            for load in concentrated_data["info"]:
+                node_num = load.get("node_number")
+                if node_num != removed_bar_id + 1 and node_num != removed_bar_id + 2:
+                    if node_num > removed_bar_id + 2:
+                        load["node_number"] = node_num - 1
+                    new_concentrated_info.append(load)
+            self.concentrated_loads_table.filling_from_file({
+                "type": "concentrated_loads",
+                "count": len(new_concentrated_info),
+                "info": new_concentrated_info
+            })
+        distributed_data = self.distributed_loads_table.get_info()
+        if distributed_data and distributed_data["info"]:
+            new_distributed_info = []
+            for load in distributed_data["info"]:
+                node_num = load.get("node_number")
+                if node_num != removed_bar_id + 1:
+                    if node_num > removed_bar_id + 1:
+                        load["node_number"] = node_num - 1
+                    new_distributed_info.append(load)
+            self.distributed_loads_table.filling_from_file({
+                "type": "distributed_loads",
+                "count": len(new_distributed_info),
+                "info": new_distributed_info
+            })
+
     def refresh_all_loads(self):
         """Полностью обновляет все нагрузки (используется при изменении стержней)"""
         self.update_concentrated_loads_display()

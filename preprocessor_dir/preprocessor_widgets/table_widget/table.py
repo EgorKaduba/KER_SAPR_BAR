@@ -70,16 +70,18 @@ class Table(QTableWidget):
                 for column in range(self.columnCount()):
                     item = self.item(row, column)
                     if item and item.text().strip():
-                        num = item.text().strip()
+                        text = item.text().strip()
+                        text = text.replace(",", ".")
                         try:
-                            if "," in num:
-                                num = float(num.replace(",", "."))
+                            if "." in text:
+                                num = float(text)
                             else:
-                                num = float(num) if "." in num else int(num)
+                                num = int(text)
                             row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
                             row_is_empty = False
                         except ValueError:
-                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
+                            # Если не число, сохраняем как строку
+                            row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = text
                             row_is_empty = False
                 if not row_is_empty:
                     data["info"].append(row_data)
@@ -95,21 +97,27 @@ class Table(QTableWidget):
         self.suppress_item_changed = True
         for row in range(row_count):
             if self.type == "bar":
-                length = info["info"][row].get("length")
-                height = info["info"][row].get("square")
-                self.parent.graphics.scene.add_bar(length, height)
+                length = info["info"][row].get("length", 1)
+                height = info["info"][row].get("square", 1)
+                modulus_elasticity = info["info"][row].get("modulus_elasticity", 1)
+                voltage = info["info"][row].get("voltage", 1)
+                self.parent.graphics.scene.add_bar(length, height, modulus_elasticity, voltage)
             for column in range(self.columnCount()):
                 if self.item(row, column) is None:
                     self.setItem(row, column, QTableWidgetItem())
                 column_name = self.types[self.type]["HeaderLabelsInfo"][column]
                 value = info["info"][row].get(column_name)
-                if isinstance(value, (int, float)):
-                    value = str(value)
-                self.item(row, column).setText(value)
+                if isinstance(value, float):
+                    value_str = f"{value:.6f}".rstrip('0').rstrip('.')
+                    value_str = value_str.replace('.', ',')
+                elif isinstance(value, int):
+                    value_str = str(value)
+                else:
+                    value_str = str(value) if value is not None else ""
+
+                self.item(row, column).setText(value_str)
         self.add_button_row()
         self.suppress_item_changed = False
-
-        # Обновляем отображение нагрузок после загрузки из файла
         if self.type == "concentrated_loads":
             self.parent.update_concentrated_loads_display()
 
@@ -118,11 +126,22 @@ class Table(QTableWidget):
         self.insertRow(row)
         self.suppress_item_changed = True
         for column in range(self.columnCount()):
-            item = QTableWidgetItem("1")
+            default_value = "1" if self.type != "bar" else "1,0"
+            item = QTableWidgetItem(default_value)
             item.setTextAlignment(Qt.AlignCenter)
             self.setItem(row, column, item)
         if self.type == "bar":
-            self.parent.graphics.scene.add_bar()
+            length_text = self.item(row, 0).text().replace(",", ".") if self.item(row, 0) else "1.0"
+            height_text = self.item(row, 1).text().replace(",", ".") if self.item(row, 1) else "1.0"
+            modulus_text = self.item(row, 2).text().replace(",", ".") if self.item(row, 2) and self.item(row,
+                                                                                                         2).text() else "1.0"
+            voltage_text = self.item(row, 3).text().replace(",", ".") if self.item(row, 3) and self.item(row,
+                                                                                                         3).text() else "1.0"
+            length = float(length_text)
+            height = float(height_text)
+            modulus_elasticity = float(modulus_text)
+            voltage = float(voltage_text)
+            self.parent.graphics.scene.add_bar(length, height, modulus_elasticity, voltage)
         self.suppress_item_changed = False
 
     def add_button_row(self):
@@ -159,17 +178,35 @@ class Table(QTableWidget):
             self.removeRow(row)
             if self.type == "bar":
                 self.parent.graphics.scene.remove_bar(row)
+                self.parent.update_loads_tables_after_bar_removal(row)
             elif self.type == "concentrated_loads":
-                # Обновляем отображение нагрузок
                 self.parent.update_concentrated_loads_display()
 
     def on_item_changed(self, item):
         if (item.row() == self.rowCount() - 1) or self.suppress_item_changed:
             return
         if self.type == "bar":
-            self.parent.graphics.scene.resize_bar(bar_id=item.row(),
-                                                  new_length=float(self.item(item.row(), 0).text().replace(",", ".")),
-                                                  new_height=float(self.item(item.row(), 1).text().replace(",", ".")))
+            length_text = self.item(item.row(), 0).text().replace(",", ".") if self.item(item.row(), 0) and self.item(
+                item.row(), 0).text() else "1.0"
+            height_text = self.item(item.row(), 1).text().replace(",", ".") if self.item(item.row(), 1) and self.item(
+                item.row(), 1).text() else "1.0"
+            modulus_text = self.item(item.row(), 2).text().replace(",", ".") if self.item(item.row(), 2) and self.item(
+                item.row(), 2).text() else "1.0"
+            voltage_text = self.item(item.row(), 3).text().replace(",", ".") if self.item(item.row(), 3) and self.item(
+                item.row(), 3).text() else "1.0"
+
+            length = float(length_text)
+            height = float(height_text)
+            modulus_elasticity = float(modulus_text)
+            voltage = float(voltage_text)
+
+            self.parent.graphics.scene.resize_bar(
+                bar_id=item.row(),
+                new_length=length,
+                new_height=height,
+                modulus_elasticity=modulus_elasticity,
+                voltage=voltage
+            )
             self.parent.refresh_all_loads()
         elif self.type == "concentrated_loads":
             self.parent.update_concentrated_loads_display()

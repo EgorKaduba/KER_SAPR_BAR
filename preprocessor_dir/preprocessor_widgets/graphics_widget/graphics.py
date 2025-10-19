@@ -1,9 +1,10 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGraphicsView, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QGraphicsView, QWidget, QHBoxLayout, QToolTip
 from PyQt5.QtGui import QBrush, QWheelEvent, QPainter, QMouseEvent
 
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_scene import GraphicsScene
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.checkboxes_group import CheckBoxGroup
+from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.bar import BarItem
 
 
 class Graphics(QGraphicsView):
@@ -19,6 +20,28 @@ class Graphics(QGraphicsView):
         self.setStyleSheet("QScrollBar { width: 0px; height: 0px; }")
         self.view_scale = 1
         self.add_sealing_checkbox()
+        self.setMouseTracking(True)
+        self.viewport().setMouseTracking(True)
+
+    def mouseMoveEvent(self, event):
+        """Обрабатываем движение мыши для показа тултипов"""
+        scene_pos = self.mapToScene(event.pos())
+        items = self.scene.items(scene_pos)
+
+        for item in items:
+            if isinstance(item, BarItem):
+                # Показываем тултип с информацией о стержне
+                tooltip_text = (f"Стержень\n"
+                                f"Длина: {item.real_length:.3f} м\n"
+                                f"Сечение: {item.real_height:.3f} м²\n"
+                                f"Модуль упругости: {item.modulus_elasticity:.0f} Па\n"
+                                f"Допускаемое напряжение: {item.voltage:.0f} Па")
+                QToolTip.showText(event.globalPos(), tooltip_text, self)
+                break
+        else:
+            QToolTip.hideText()
+
+        super().mouseMoveEvent(event)
 
     def add_sealing_checkbox(self):
         checkbox_widget = QWidget(self)
@@ -31,6 +54,11 @@ class Graphics(QGraphicsView):
 
         checkbox_widget.move(10, 380)
         checkbox_widget.resize(140, 50)
+
+    def set_supports_states(self, left_visible, right_visible):
+        """Устанавливает состояния чекбоксов заделок"""
+        if hasattr(self, 'sealing_group'):
+            self.sealing_group.set_states(left_visible, right_visible)
 
     def set_supports_states(self, left_visible, right_visible):
         """Устанавливает состояния чекбоксов заделок"""

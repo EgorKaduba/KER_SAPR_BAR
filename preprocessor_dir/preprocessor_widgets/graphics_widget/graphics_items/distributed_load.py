@@ -18,29 +18,25 @@ class DistributedLoadItem(QGraphicsItem):
 
     def paint(self, painter, option, widget=None):
         painter.setPen(QPen(Qt.blue, 2))
-
         segment_count = max(3, int(self.bar_length / 30))
         segment_length = self.bar_length / segment_count
-
-        if self.power > 0:  # Направление вправо
+        if self.power > 0:
             for i in range(segment_count):
                 x = i * segment_length + segment_length / 2
                 painter.drawLine(x, 0, x, -20)
                 painter.drawLine(x, -20, x - 4, -16)
                 painter.drawLine(x, -20, x + 4, -16)
-        else:  # Направление влево
+        else:
             for i in range(segment_count):
                 x = i * segment_length + segment_length / 2
                 painter.drawLine(x, 0, x, -20)
                 painter.drawLine(x, -20, x - 4, -24)
                 painter.drawLine(x, -20, x + 4, -24)
-
         painter.setPen(QPen(Qt.darkBlue))
         font = QFont()
         font.setPointSize(7)
         font.setBold(True)
         painter.setFont(font)
-
         label = f"q={abs(self.power):.1f}"
         text_width = len(label) * 5
         text_x = self.bar_length / 2 - text_width / 2
@@ -49,4 +45,4 @@ class DistributedLoadItem(QGraphicsItem):
     def update_length(self, new_length: float):
         """Обновляет длину распределенной нагрузки"""
         self.bar_length = new_length
-        self.update()  # Принудительно перерисовываем
+        self.update()
