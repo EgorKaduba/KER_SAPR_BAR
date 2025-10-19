@@ -41,22 +41,49 @@ class DataValidator:
         return errors
 
     @staticmethod
+    def validate_supports_data(supports_data):
+        """Валидация данных заделок"""
+        errors = []
+        if not supports_data:
+            return errors
+
+        if "type" not in supports_data or supports_data["type"] != "supports":
+            errors.append("Неверный тип данных заделок")
+
+        if "left_support" not in supports_data or not isinstance(supports_data["left_support"], bool):
+            errors.append("Неверное значение левой заделки")
+
+        if "right_support" not in supports_data or not isinstance(supports_data["right_support"], bool):
+            errors.append("Неверное значение правой заделки")
+
+        return errors
+
+    @staticmethod
     def validate_all_data(data_dict):
         """Полная валидация всех данных"""
         all_errors = []
-        if "Objects" not in data_dict or len(data_dict["Objects"]) != 3:
+        if "Objects" not in data_dict or len(data_dict["Objects"]) != 4:  # Измените на 4
             return ["Неверная структура файла проекта"]
-        bar_data, concentrated_data, distributed_data = data_dict["Objects"]
+
+        bar_data, concentrated_data, distributed_data, supports_data = data_dict["Objects"]
+
         # Валидация стержней
         bar_errors = DataValidator.validate_bar_data(bar_data)
         all_errors.extend(bar_errors)
+
         # Определяем количество стержней для проверки номеров узлов
         bar_count = bar_data["count"] if bar_data else 0
+
         # Валидация сосредоточенных нагрузок
         concentrated_errors = DataValidator.validate_loads_data(concentrated_data, bar_count, "concentrated")
         all_errors.extend(concentrated_errors)
+
         # Валидация распределенных нагрузок
         distributed_errors = DataValidator.validate_loads_data(distributed_data, bar_count, "distributed")
         all_errors.extend(distributed_errors)
+
+        # Валидация заделок
+        supports_errors = DataValidator.validate_supports_data(supports_data)
+        all_errors.extend(supports_errors)
 
         return all_errors

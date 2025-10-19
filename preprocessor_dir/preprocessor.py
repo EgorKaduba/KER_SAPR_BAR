@@ -35,11 +35,26 @@ class Preprocessor(QWidget):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
     def get_all_info(self):
-        info = [self.bar_table.get_info(), self.concentrated_loads_table.get_info(),
-                self.distributed_loads_table.get_info()]
+        info = [
+            self.bar_table.get_info(),
+            self.concentrated_loads_table.get_info(),
+            self.distributed_loads_table.get_info(),
+            {
+                "type": "supports",
+                "left_support": self.graphics.scene.left_sealing.isVisible(),
+                "right_support": self.graphics.scene.right_sealing.isVisible()
+            }
+        ]
         return {"Objects": info}
 
     def filling_from_file(self, info: dict):
         self.bar_table.filling_from_file(info["Objects"][0])
         self.concentrated_loads_table.filling_from_file(info["Objects"][1])
         self.distributed_loads_table.filling_from_file(info["Objects"][2])
+
+        # Загрузка состояний заделок
+        if len(info["Objects"]) > 3 and info["Objects"][3]["type"] == "supports":
+            supports_data = info["Objects"][3]
+            self.graphics.scene.changed_left_sealing(supports_data.get("left_support"))
+            self.graphics.scene.changed_right_sealing(supports_data.get("right_support"))
+            self.graphics.set_supports_states(supports_data.get("left_support"), supports_data.get("right_support"))

@@ -92,7 +92,12 @@ class Table(QTableWidget):
         row_count = info["count"]
         self.removeRow(self.rowCount() - 1)
         self.setRowCount(row_count)
+        self.suppress_item_changed = True
         for row in range(row_count):
+            if self.type == "bar":
+                length = info["info"][row].get("length")
+                height = info["info"][row].get("square")
+                self.parent.graphics.scene.add_bar(length, height)
             for column in range(self.columnCount()):
                 if self.item(row, column) is None:
                     self.setItem(row, column, QTableWidgetItem())
@@ -102,6 +107,7 @@ class Table(QTableWidget):
                     value = str(value)
                 self.item(row, column).setText(value)
         self.add_button_row()
+        self.suppress_item_changed = False
 
     def add_data_row(self):
         row = self.rowCount()
@@ -145,10 +151,10 @@ class Table(QTableWidget):
             self.parent.graphics.scene.remove_bar(row)
 
     def on_item_changed(self, item):
-        """Вызывается при изменении конкретного item"""
-        if (item.row() == self.rowCount() - 1) and self.type != "bar":
+        if (item.row() == self.rowCount() - 1) or self.type != "bar":
             return
         if self.suppress_item_changed:
             return
-        self.parent.graphics.scene.resize_bar(bar_id=item.row(), new_length=int(self.item(item.row(), 0).text()),
-                                              new_height=int(self.item(item.row(), 1).text()))
+        self.parent.graphics.scene.resize_bar(bar_id=item.row(),
+                                              new_length=float(self.item(item.row(), 0).text().replace(",", ".")),
+                                              new_height=float(self.item(item.row(), 1).text().replace(",", ".")))
