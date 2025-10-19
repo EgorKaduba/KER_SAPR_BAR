@@ -43,6 +43,7 @@ class GraphicsScene(QGraphicsScene):
                    voltage: float = None):
         if bar_id < 0 or bar_id >= len(self.bars):
             return
+
         display_length = self._limit_length(new_length)
         display_height = self._limit_height(new_height)
         bar = self.bars[bar_id]
@@ -50,20 +51,27 @@ class GraphicsScene(QGraphicsScene):
         current_x = bar.rect().x()
         new_width = display_length * 100
         new_height_px = display_height * 100
-        width_difference = new_width - old_width
+
         bar.prepareGeometryChange()
         bar.setRect(current_x, -new_height_px / 2, new_width, new_height_px)
+
         if modulus_elasticity is not None:
             bar.modulus_elasticity = modulus_elasticity
         if voltage is not None:
             bar.voltage = voltage
         bar.real_length = new_length
         bar.real_height = new_height
+        current_x = bar.rect().x() + new_width
+
         for i in range(bar_id + 1, len(self.bars)):
             next_bar = self.bars[i]
             next_bar.prepareGeometryChange()
-            next_bar.setX(next_bar.x() + width_difference)
-        self.last_x += width_difference
+            bar_width = next_bar.rect().width()
+            bar_height = next_bar.rect().height()
+            next_bar.setRect(current_x, -bar_height / 2, bar_width, bar_height)
+            current_x += bar_width
+
+        self.last_x = current_x
         self.right_sealing.setX(self.last_x)
         self.update_loads_positions()
 
@@ -78,25 +86,21 @@ class GraphicsScene(QGraphicsScene):
     def remove_bar(self, bar_id: int):
         if bar_id < 0 or bar_id >= len(self.bars):
             return
+
         bar_to_remove = self.bars[bar_id]
-        old_width = bar_to_remove.rect().width()
         self.remove_bar_loads(bar_id)
         self.removeItem(bar_to_remove)
         self.bars.pop(bar_id)
         self.update_loads_node_numbers_after_removal(bar_id)
-        current_x = self.bars[0].rect().x() if self.bars else -500
-        for i, bar in enumerate(self.bars):
-            if i == 0:
-                continue
-            bar.prepareGeometryChange()
-            prev_bar = self.bars[i - 1]
-            bar.setX(prev_bar.rect().x() + prev_bar.rect().width())
-        if self.bars:
-            last_bar = self.bars[-1]
-            self.last_x = last_bar.rect().x() + last_bar.rect().width()
-        else:
-            self.last_x = -500
+        current_x = -500
 
+        for bar in self.bars:
+            bar.prepareGeometryChange()
+            current_width = bar.rect().width()
+            current_height = bar.rect().height()
+            bar.setRect(current_x, -current_height / 2, current_width, current_height)
+            current_x += current_width
+        self.last_x = current_x
         self.right_sealing.setX(self.last_x)
         self.update_loads_positions()
 

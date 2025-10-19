@@ -71,7 +71,6 @@ class Table(QTableWidget):
                     item = self.item(row, column)
                     if item and item.text().strip():
                         text = item.text().strip()
-                        text = text.replace(",", ".")
                         try:
                             if "." in text:
                                 num = float(text)
@@ -80,7 +79,6 @@ class Table(QTableWidget):
                             row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = num
                             row_is_empty = False
                         except ValueError:
-                            # Если не число, сохраняем как строку
                             row_data[self.types[self.type]["HeaderLabelsInfo"][column]] = text
                             row_is_empty = False
                 if not row_is_empty:
@@ -107,9 +105,13 @@ class Table(QTableWidget):
                     self.setItem(row, column, QTableWidgetItem())
                 column_name = self.types[self.type]["HeaderLabelsInfo"][column]
                 value = info["info"][row].get(column_name)
+
+                # Форматируем числа с точкой
                 if isinstance(value, float):
+                    # Форматируем float с точкой и ограничиваем количество знаков после запятой
                     value_str = f"{value:.6f}".rstrip('0').rstrip('.')
-                    value_str = value_str.replace('.', ',')
+                    if '.' not in value_str and 'e' not in value_str.lower():
+                        value_str += ".0"
                 elif isinstance(value, int):
                     value_str = str(value)
                 else:
@@ -126,21 +128,23 @@ class Table(QTableWidget):
         self.insertRow(row)
         self.suppress_item_changed = True
         for column in range(self.columnCount()):
-            default_value = "1" if self.type != "bar" else "1,0"
+            # Используем точку в значениях по умолчанию
+            default_value = "1" if self.type != "bar" else "1.0"
             item = QTableWidgetItem(default_value)
             item.setTextAlignment(Qt.AlignCenter)
             self.setItem(row, column, item)
         if self.type == "bar":
-            length_text = self.item(row, 0).text().replace(",", ".") if self.item(row, 0) else "1.0"
-            height_text = self.item(row, 1).text().replace(",", ".") if self.item(row, 1) else "1.0"
-            modulus_text = self.item(row, 2).text().replace(",", ".") if self.item(row, 2) and self.item(row,
-                                                                                                         2).text() else "1.0"
-            voltage_text = self.item(row, 3).text().replace(",", ".") if self.item(row, 3) and self.item(row,
-                                                                                                         3).text() else "1.0"
+            # Получаем значения из таблицы для передачи в сцену
+            length_text = self.item(row, 0).text() if self.item(row, 0) else "1.0"
+            height_text = self.item(row, 1).text() if self.item(row, 1) else "1.0"
+            modulus_text = self.item(row, 2).text() if self.item(row, 2) and self.item(row, 2).text() else "1.0"
+            voltage_text = self.item(row, 3).text() if self.item(row, 3) and self.item(row, 3).text() else "1.0"
+
             length = float(length_text)
             height = float(height_text)
             modulus_elasticity = float(modulus_text)
             voltage = float(voltage_text)
+
             self.parent.graphics.scene.add_bar(length, height, modulus_elasticity, voltage)
         self.suppress_item_changed = False
 
@@ -186,19 +190,27 @@ class Table(QTableWidget):
         if (item.row() == self.rowCount() - 1) or self.suppress_item_changed:
             return
         if self.type == "bar":
-            length_text = self.item(item.row(), 0).text().replace(",", ".") if self.item(item.row(), 0) and self.item(
-                item.row(), 0).text() else "1.0"
-            height_text = self.item(item.row(), 1).text().replace(",", ".") if self.item(item.row(), 1) and self.item(
-                item.row(), 1).text() else "1.0"
-            modulus_text = self.item(item.row(), 2).text().replace(",", ".") if self.item(item.row(), 2) and self.item(
-                item.row(), 2).text() else "1.0"
-            voltage_text = self.item(item.row(), 3).text().replace(",", ".") if self.item(item.row(), 3) and self.item(
-                item.row(), 3).text() else "1.0"
+            # Получаем все данные строки (уже с точкой)
+            length_text = self.item(item.row(), 0).text() if self.item(item.row(), 0) and self.item(item.row(),
+                                                                                                    0).text() else "1.0"
+            height_text = self.item(item.row(), 1).text() if self.item(item.row(), 1) and self.item(item.row(),
+                                                                                                    1).text() else "1.0"
+            modulus_text = self.item(item.row(), 2).text() if self.item(item.row(), 2) and self.item(item.row(),
+                                                                                                     2).text() else "1.0"
+            voltage_text = self.item(item.row(), 3).text() if self.item(item.row(), 3) and self.item(item.row(),
+                                                                                                     3).text() else "1.0"
 
-            length = float(length_text)
-            height = float(height_text)
-            modulus_elasticity = float(modulus_text)
-            voltage = float(voltage_text)
+            try:
+                length = float(length_text)
+                height = float(height_text)
+                modulus_elasticity = float(modulus_text)
+                voltage = float(voltage_text)
+            except ValueError:
+                # Если ошибка преобразования, используем значения по умолчанию
+                length = 1.0
+                height = 1.0
+                modulus_elasticity = 1.0
+                voltage = 1.0
 
             self.parent.graphics.scene.resize_bar(
                 bar_id=item.row(),
