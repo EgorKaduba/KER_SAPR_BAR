@@ -35,10 +35,25 @@ class Preprocessor(QWidget):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
     def get_all_info(self):
+        bar_data = self.bar_table.get_info()
+        concentrated_data = self.concentrated_loads_table.get_info()
+        distributed_data = self.distributed_loads_table.get_info()
+        if distributed_data is None:
+            distributed_data = {
+                "type": "distributed_loads",
+                "count": 0,
+                "info": []
+            }
+        if concentrated_data is None:
+            concentrated_data = {
+                "type": "concentrated_loads",
+                "count": 0,
+                "info": []
+            }
         info = [
-            self.bar_table.get_info(),
-            self.concentrated_loads_table.get_info(),
-            self.distributed_loads_table.get_info(),
+            bar_data,
+            concentrated_data,
+            distributed_data,
             {
                 "type": "supports",
                 "left_support": self.graphics.scene.left_sealing.isVisible(),
@@ -48,13 +63,32 @@ class Preprocessor(QWidget):
         return {"Objects": info}
 
     def filling_from_file(self, info: dict):
+        self.graphics.scene.clear_all()
         self.bar_table.filling_from_file(info["Objects"][0])
         self.concentrated_loads_table.filling_from_file(info["Objects"][1])
         self.distributed_loads_table.filling_from_file(info["Objects"][2])
-
-        # Загрузка состояний заделок
         if len(info["Objects"]) > 3 and info["Objects"][3]["type"] == "supports":
             supports_data = info["Objects"][3]
-            self.graphics.scene.changed_left_sealing(supports_data.get("left_support"))
-            self.graphics.scene.changed_right_sealing(supports_data.get("right_support"))
-            self.graphics.set_supports_states(supports_data.get("left_support"), supports_data.get("right_support"))
+            left_support = supports_data.get("left_support", False)
+            right_support = supports_data.get("right_support", False)
+            self.graphics.scene.changed_left_sealing(left_support)
+            self.graphics.scene.changed_right_sealing(right_support)
+            self.graphics.set_supports_states(left_support, right_support)
+        self.update_concentrated_loads_display()
+
+    def update_concentrated_loads_display(self):
+        """Обновляет отображение сосредоточенных нагрузок на сцене"""
+        self.graphics.scene.clear_concentrated_loads()
+        if not self.graphics.scene.bars:
+            return
+        concentrated_data = self.concentrated_loads_table.get_info()
+        if concentrated_data and concentrated_data["info"]:
+            for load in concentrated_data["info"]:
+                node_num = load.get("node_number")
+                power = load.get("power")
+                if node_num is not None and power is not None:
+                    self.graphics.scene.add_concentrated_load(node_num, power)
+
+    def refresh_all_loads(self):
+        """Полностью обновляет все нагрузки (используется при изменении стержней)"""
+        self.update_concentrated_loads_display()

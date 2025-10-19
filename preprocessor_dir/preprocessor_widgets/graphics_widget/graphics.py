@@ -33,7 +33,9 @@ class Graphics(QGraphicsView):
         checkbox_widget.resize(140, 50)
 
     def set_supports_states(self, left_visible, right_visible):
-        self.sealing_group.set_states(left_visible, right_visible)
+        """Устанавливает состояния чекбоксов заделок"""
+        if hasattr(self, 'sealing_group'):
+            self.sealing_group.set_states(left_visible, right_visible)
 
     def wheelEvent(self, event: QWheelEvent):
         zoom_factor = 1.15

@@ -109,6 +109,10 @@ class Table(QTableWidget):
         self.add_button_row()
         self.suppress_item_changed = False
 
+        # Обновляем отображение нагрузок после загрузки из файла
+        if self.type == "concentrated_loads":
+            self.parent.update_concentrated_loads_display()
+
     def add_data_row(self):
         row = self.rowCount()
         self.insertRow(row)
@@ -137,6 +141,11 @@ class Table(QTableWidget):
         self.removeRow(row)
         self.add_data_row()
         self.add_button_row()
+        if self.type == "concentrated_loads":
+            if self.parent.graphics.scene.bars:
+                self.parent.update_concentrated_loads_display()
+        elif self.type == "bar":
+            self.parent.refresh_all_loads()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Backspace or event.key() == Qt.Key_Delete:
@@ -148,13 +157,19 @@ class Table(QTableWidget):
         row = self.currentRow()
         if (row >= 0) and (row < (self.rowCount() - 1)):
             self.removeRow(row)
-            self.parent.graphics.scene.remove_bar(row)
+            if self.type == "bar":
+                self.parent.graphics.scene.remove_bar(row)
+            elif self.type == "concentrated_loads":
+                # Обновляем отображение нагрузок
+                self.parent.update_concentrated_loads_display()
 
     def on_item_changed(self, item):
-        if (item.row() == self.rowCount() - 1) or self.type != "bar":
+        if (item.row() == self.rowCount() - 1) or self.suppress_item_changed:
             return
-        if self.suppress_item_changed:
-            return
-        self.parent.graphics.scene.resize_bar(bar_id=item.row(),
-                                              new_length=float(self.item(item.row(), 0).text().replace(",", ".")),
-                                              new_height=float(self.item(item.row(), 1).text().replace(",", ".")))
+        if self.type == "bar":
+            self.parent.graphics.scene.resize_bar(bar_id=item.row(),
+                                                  new_length=float(self.item(item.row(), 0).text().replace(",", ".")),
+                                                  new_height=float(self.item(item.row(), 1).text().replace(",", ".")))
+            self.parent.refresh_all_loads()
+        elif self.type == "concentrated_loads":
+            self.parent.update_concentrated_loads_display()
