@@ -105,11 +105,8 @@ class Table(QTableWidget):
                     self.setItem(row, column, QTableWidgetItem())
                 column_name = self.types[self.type]["HeaderLabelsInfo"][column]
                 value = info["info"][row].get(column_name)
-
-                # Форматируем числа с точкой
                 if isinstance(value, float):
-                    # Форматируем float с точкой и ограничиваем количество знаков после запятой
-                    value_str = f"{value:.6f}".rstrip('0').rstrip('.')
+                    value_str = f"{value}".rstrip('0').rstrip('.')
                     if '.' not in value_str and 'e' not in value_str.lower():
                         value_str += ".0"
                 elif isinstance(value, int):
@@ -128,13 +125,11 @@ class Table(QTableWidget):
         self.insertRow(row)
         self.suppress_item_changed = True
         for column in range(self.columnCount()):
-            # Используем точку в значениях по умолчанию
             default_value = "1" if self.type != "bar" else "1.0"
             item = QTableWidgetItem(default_value)
             item.setTextAlignment(Qt.AlignCenter)
             self.setItem(row, column, item)
         if self.type == "bar":
-            # Получаем значения из таблицы для передачи в сцену
             length_text = self.item(row, 0).text() if self.item(row, 0) else "1.0"
             height_text = self.item(row, 1).text() if self.item(row, 1) else "1.0"
             modulus_text = self.item(row, 2).text() if self.item(row, 2) and self.item(row, 2).text() else "1.0"
@@ -190,7 +185,6 @@ class Table(QTableWidget):
         if (item.row() == self.rowCount() - 1) or self.suppress_item_changed:
             return
         if self.type == "bar":
-            # Получаем все данные строки (уже с точкой)
             length_text = self.item(item.row(), 0).text() if self.item(item.row(), 0) and self.item(item.row(),
                                                                                                     0).text() else "1.0"
             height_text = self.item(item.row(), 1).text() if self.item(item.row(), 1) and self.item(item.row(),
@@ -206,7 +200,6 @@ class Table(QTableWidget):
                 modulus_elasticity = float(modulus_text)
                 voltage = float(voltage_text)
             except ValueError:
-                # Если ошибка преобразования, используем значения по умолчанию
                 length = 1.0
                 height = 1.0
                 modulus_elasticity = 1.0

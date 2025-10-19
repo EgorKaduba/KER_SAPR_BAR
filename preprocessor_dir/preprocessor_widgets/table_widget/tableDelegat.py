@@ -11,17 +11,18 @@ class TableDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QLineEdit(parent)
         editor.setAlignment(Qt.AlignHCenter)
-        editor.setPlaceholderText("Любое число > 0")
-
         validator = None
         if self.column_type["type"] == "int":
-            validator = QIntValidator()
-            validator.setBottom(0 if self.column_type["plus"] else -1000000)
+            if self.column_type["plus"]:
+                validator = QIntValidator(1, 1000000, parent)
+            else:
+                regex = QRegExp(r"^-?(0*[1-9]\d*)$")
+                validator = QRegExpValidator(regex, parent)
         elif self.column_type["type"] == "float":
             if self.column_type["plus"]:
-                regex = QRegExp(r"^(\d+\.?\d*|\.\d+)$")
+                regex = QRegExp(r"^(0*[1-9]\d*\.?\d*|0*\.0*[1-9]\d*)$")
             else:
-                regex = QRegExp(r"^-?(\d+\.?\d*|\.\d+)$")
+                regex = QRegExp(r"^-?(0*[1-9]\d*\.?\d*|0*\.0*[1-9]\d*)$")
             validator = QRegExpValidator(regex, parent)
 
         editor.setValidator(validator)
@@ -32,31 +33,46 @@ class TableDelegate(QStyledItemDelegate):
         editor.setText(str(text))
 
     def setModelData(self, editor, model, index):
-        text = editor.text()
-        if self.column_type["type"] == "float" and text:
-            text = self._ensure_positive_non_zero(text)
+        text = editor.text().strip()
+
+        if not text:
+            text = self._get_default_value()
+        else:
+            text = self._validate_and_correct(text)
 
         model.setData(index, text, Qt.EditRole)
 
-    def _ensure_positive_non_zero(self, text):
-        """Обеспечивает, что число положительное и не равно 0"""
-        text = text.strip()
-        if text in ["", ".", "-", "-."]:
+    def _get_default_value(self):
+        if self.column_type["type"] == "int":
+            return "1"
+        else:
             return "1.0"
-        try:
-            value = float(text)
-            if value <= 0:
-                return "1.0"
-            if text.endswith('.'):
-                return text + "0"
-            if text.startswith('.'):
-                return "0" + text
-            if text.startswith('-.'):
-                return "0.1"
-            if '.' not in text and text.replace('-', '').isdigit():
-                return text + ".0"
 
-            return text
+    def _validate_and_correct(self, text):
+        if text in ["", ".", "-", "-."]:
+            return self._get_default_value()
+
+        try:
+            if self.column_type["type"] == "int":
+                value = int(text)
+                if value == 0:
+                    return self._get_default_value()
+                if self.column_type["plus"] and value < 0:
+                    return str(abs(value))
+                return str(value)
+            else:
+                value = float(text)
+                if value == 0:
+                    return self._get_default_value()
+                if self.column_type["plus"] and value < 0:
+                    value = abs(value)
+                if value == int(value):
+                    return f"{int(value)}.0"
+                else:
+                    text = f"{value:.10f}".rstrip('0').rstrip('.')
+                    if '.' not in text:
+                        text += ".0"
+                    return text
 
         except ValueError:
-            return "1.0"
+            return self._get_default_value()

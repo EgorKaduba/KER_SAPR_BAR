@@ -4,7 +4,6 @@ from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.grid i
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.bar import BarItem
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.sealing import Sealing
 from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.concentrated_load import ConcentratedLoadItem
-from preprocessor_dir.preprocessor_widgets.graphics_widget.graphics_items.distributed_load import DistributedLoadItem
 
 
 class GraphicsScene(QGraphicsScene):
@@ -13,7 +12,6 @@ class GraphicsScene(QGraphicsScene):
         self.add_grid()
         self.bars: list[BarItem] = list()
         self.concentrated_loads: list[ConcentratedLoadItem] = list()
-        self.distributed_loads: list[DistributedLoadItem] = list()
         self.last_x = -500
         self.left_sealing = Sealing(-501, -100, 200, "left")
         self.right_sealing = Sealing(-499, -100, 200, "right")
@@ -113,21 +111,10 @@ class GraphicsScene(QGraphicsScene):
         for load in loads_to_remove:
             self.removeItem(load)
             self.concentrated_loads.remove(load)
-        distributed_to_remove = []
-        for load in self.distributed_loads:
-            if load.node_number == bar_id + 1:
-                distributed_to_remove.append(load)
-
-        for load in distributed_to_remove:
-            self.removeItem(load)
-            self.distributed_loads.remove(load)
 
     def update_loads_node_numbers_after_removal(self, removed_bar_id: int):
         """Обновляет номера узлов у нагрузок после удаления стержня"""
         for load in self.concentrated_loads:
-            if load.node_number > removed_bar_id + 1:
-                load.node_number -= 1
-        for load in self.distributed_loads:
             if load.node_number > removed_bar_id + 1:
                 load.node_number -= 1
 
@@ -166,37 +153,12 @@ class GraphicsScene(QGraphicsScene):
             self.removeItem(load)
         self.concentrated_loads.clear()
 
-    def add_distributed_load(self, node_number: int, power: float):
-        """Добавляет распределенную нагрузку в указанный узел (начало стержня)"""
-        bar_index = node_number - 1  # Узлы с 1, стержни с 0
-        if 0 <= bar_index < len(self.bars):
-            bar = self.bars[bar_index]
-            x_pos = bar.rect().x()
-            bar_length = bar.rect().width()
-            load = DistributedLoadItem(node_number, power, x_pos, bar_length)
-            self.distributed_loads.append(load)
-            self.addItem(load)
-
-    def clear_distributed_loads(self):
-        """Удаляет все распределенные нагрузки со сцены"""
-        for load in self.distributed_loads:
-            self.removeItem(load)
-        self.distributed_loads.clear()
-
     def update_loads_positions(self):
         """Обновляет позиции всех нагрузок при изменении стержней"""
         for load in self.concentrated_loads:
             new_x = self.get_node_x_position(load.node_number)
             if new_x is not None:
                 load.setPos(new_x, 0)
-        for load in self.distributed_loads:
-            bar_index = load.node_number - 1
-            if 0 <= bar_index < len(self.bars):
-                bar = self.bars[bar_index]
-                new_x = bar.rect().x()
-                new_length = bar.rect().width()
-                load.setPos(new_x, 0)
-                load.update_length(new_length)
 
     def clear_all(self):
         """Очищает все стержни и нагрузки со сцены"""
@@ -206,7 +168,6 @@ class GraphicsScene(QGraphicsScene):
             self.removeItem(bar)
         self.bars.clear()
         self.clear_concentrated_loads()
-        self.clear_distributed_loads()
         self.last_x = -500
         self.right_sealing.setX(self.last_x + 1)
         self.left_sealing.setVisible(left_visible)

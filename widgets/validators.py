@@ -7,16 +7,12 @@ class DataValidator:
             return ["Нет данных о стержнях"]
 
         for i, bar in enumerate(bar_data["info"]):
-            # Проверка длины
             if "length" not in bar or bar["length"] <= 0:
                 errors.append(f"Стержень {i + 1}: Длина должна быть больше 0")
-            # Проверка площади сечения
             if "square" not in bar or bar["square"] <= 0:
                 errors.append(f"Стержень {i + 1}: Площадь сечения должна быть больше 0")
-            # Проверка модуля упругости
             if "modulus_elasticity" not in bar or bar["modulus_elasticity"] <= 0:
                 errors.append(f"Стержень {i + 1}: Модуль упругости должен быть больше 0")
-            # Проверка допускаемого напряжения
             if "voltage" not in bar or bar["voltage"] <= 0:
                 errors.append(f"Стержень {i + 1}: Допускаемое напряжение должно быть больше 0")
         return errors
