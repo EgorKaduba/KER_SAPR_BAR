@@ -30,14 +30,12 @@ class DataValidator:
             node_num = load.get("node_number")
 
             if load_type == "concentrated":
-                # Для сосредоточенных - проверка узлов (от 1 до bar_count + 1)
                 if node_num is None:
                     errors.append(f"{load_name.capitalize()} нагрузка {i + 1}: Отсутствует номер узла")
                 elif not isinstance(node_num, int) or node_num <= 0 or node_num > bar_count + 1:
                     errors.append(
                         f"{load_name.capitalize()} нагрузка {i + 1}: Номер узла {node_num} не существует (должен быть от 1 до {bar_count + 1})")
             else:
-                # Для распределенных - проверка стержней (от 1 до bar_count)
                 if node_num is None:
                     errors.append(f"{load_name.capitalize()} нагрузка {i + 1}: Отсутствует номер стержня")
                 elif not isinstance(node_num, int) or node_num <= 0 or node_num > bar_count:
@@ -55,15 +53,32 @@ class DataValidator:
         errors = []
         if not supports_data:
             return errors
-
         if "type" not in supports_data or supports_data["type"] != "supports":
             errors.append("Неверный тип данных заделок")
-
         if "left_support" not in supports_data or not isinstance(supports_data["left_support"], bool):
             errors.append("Неверное значение левой заделки")
-
         if "right_support" not in supports_data or not isinstance(supports_data["right_support"], bool):
             errors.append("Неверное значение правой заделки")
+
+        return errors
+
+    @staticmethod
+    def validate_distributed_loads_uniqueness(distributed_data, bar_count):
+        """Проверяет, что на один стержень не назначено несколько распределенных нагрузок"""
+        errors = []
+        if not distributed_data or not distributed_data["info"]:
+            return errors
+        used_bars = set()
+        for i, load in enumerate(distributed_data["info"]):
+            bar_num = load.get("node_number")  # Это номер стержня!
+
+            if bar_num in used_bars:
+                errors.append(
+                    f"Распределенная нагрузка {i + 1}: На стержень {bar_num} назначено несколько распределённых нагрузок")
+            else:
+                used_bars.add(bar_num)
+            if bar_num is not None and (bar_num <= 0 or bar_num > bar_count):
+                errors.append(f"Распределенная нагрузка {i + 1}: Стержень {bar_num} не существует")
 
         return errors
 
@@ -83,6 +98,9 @@ class DataValidator:
         if distributed_data:
             distributed_errors = DataValidator.validate_loads_data(distributed_data, bar_count, "distributed")
             all_errors.extend(distributed_errors)
+            uniqueness_errors = DataValidator.validate_distributed_loads_uniqueness(distributed_data, bar_count)
+            all_errors.extend(uniqueness_errors)
         supports_errors = DataValidator.validate_supports_data(supports_data)
         all_errors.extend(supports_errors)
+
         return all_errors

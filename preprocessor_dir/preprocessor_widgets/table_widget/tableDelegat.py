@@ -20,9 +20,9 @@ class TableDelegate(QStyledItemDelegate):
                 validator = QRegExpValidator(regex, parent)
         elif self.column_type["type"] == "float":
             if self.column_type["plus"]:
-                regex = QRegExp(r"^(0*[1-9]\d*\.?\d*|0*\.0*[1-9]\d*)$")
+                regex = QRegExp(r"^(\d+\.?\d*|\.\d+)$")
             else:
-                regex = QRegExp(r"^-?(0*[1-9]\d*\.?\d*|0*\.0*[1-9]\d*)$")
+                regex = QRegExp(r"^-?(\d*\.?\d*|\d+\.\d*)$")
             validator = QRegExpValidator(regex, parent)
 
         editor.setValidator(validator)
@@ -72,6 +72,8 @@ class TableDelegate(QStyledItemDelegate):
                     text = f"{value:.10f}".rstrip('0').rstrip('.')
                     if '.' not in text:
                         text += ".0"
+                    if text == "0.0":
+                        return self._get_default_value()
                     return text
 
         except ValueError:

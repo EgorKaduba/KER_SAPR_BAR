@@ -80,11 +80,11 @@ class GraphicsScene(QGraphicsScene):
 
     @staticmethod
     def _limit_length(length: float) -> float:
-        return max(0.3, min(10.0, length))
+        return max(0.5, min(10.0, length))
 
     @staticmethod
     def _limit_height(height: float) -> float:
-        return max(0.3, min(4.0, height))
+        return max(1.0, min(4.0, height))
 
     def remove_bar(self, bar_id: int):
         if bar_id < 0 or bar_id >= len(self.bars):

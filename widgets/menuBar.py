@@ -18,7 +18,6 @@ class MenuBar(QMenuBar):
     def setup_menu_bar(self):
         file_menu = QMenu("&Файл", self)
 
-        # ДОБАВЛЯЕМ ДЕЙСТВИЕ "НОВЫЙ"
         new_action = QAction(QIcon("images/icons/new_icon.png"), "Новый", file_menu)
         new_action.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_N))
         new_action.triggered.connect(self.new_file)  # noqa
@@ -42,6 +41,16 @@ class MenuBar(QMenuBar):
         file_menu.addSeparator()
         file_menu.addAction(exit_action)
 
+        view_menu = QMenu("&Вид", self)
+
+        grid_action = QAction(QIcon("images/icons/grid_icon.png"), "Сетка", view_menu)
+        grid_action.setCheckable(True)
+        grid_action.setChecked(True)
+        grid_action.triggered.connect(self.toggle_grid)  # noqa
+        grid_action.setShortcut(QKeySequence(Qt.ALT + Qt.Key_G))
+
+        view_menu.addAction(grid_action)
+
         reference_menu = QMenu("Справка", self)
 
         manual_action = QAction(QIcon("images/icons/manual_icon.png"), "Руководство", reference_menu)
@@ -51,6 +60,7 @@ class MenuBar(QMenuBar):
         reference_menu.addAction(manual_action)
 
         self.addMenu(file_menu)
+        self.addMenu(view_menu)
         self.addMenu(reference_menu)
 
     def new_file(self):
@@ -124,3 +134,16 @@ class MenuBar(QMenuBar):
 
     def close_manual(self):
         self.parent.status_bar.showMessage(f"Руководство закрыто", msecs=3000)
+
+    def toggle_grid(self, checked):
+        """Включает/выключает отображение сетки"""
+        scene = self.parent.preprocessor.graphics.scene
+        grid_item = None
+        for item in scene.items():
+            if hasattr(item, 'grid_size'):
+                grid_item = item
+                break
+        if grid_item:
+            grid_item.setVisible(checked)
+        state = "включена" if checked else "выключена"
+        self.parent.status_bar.showMessage(f"Сетка {state}", msecs=3000)

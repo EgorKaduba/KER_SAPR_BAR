@@ -30,7 +30,7 @@ class ConcentratedLoadItem(QGraphicsItem):
         font.setPointSize(8)
         font.setBold(True)
         painter.setFont(font)
-        label = f"F={abs(self.power):.1f}"
+        label = f"{abs(self.power):.1f}"
         if self.power > 0:
             painter.drawText(5, -10, label)
         else:

@@ -51,9 +51,8 @@ class DistributedLoadItem(QGraphicsItem):
         font.setPointSize(8)
         font.setBold(True)
         painter.setFont(font)
-        label = f"q={self.power:.1f}"
+        label = f"{self.power:.1f}"
         text_width = 50
-        text_height = 12
         text_x = int(self.bar_length / 2 - text_width / 2)
         text_y = 15
         if text_x < 5:
