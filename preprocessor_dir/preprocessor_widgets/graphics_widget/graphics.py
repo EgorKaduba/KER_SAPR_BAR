@@ -12,11 +12,13 @@ class Graphics(QGraphicsView):
         QGraphicsView.__init__(self, parent=parent)
         self.setBackgroundBrush(QBrush(Qt.white))
         self.scene = GraphicsScene(parent=self)
+        self.checkbox_widget = QWidget(self)
+        self.sealing_group = CheckBoxGroup(self)
         self.setScene(self.scene)
         self.setMinimumHeight(400)
-        self.setRenderHint(QPainter.Antialiasing)
-        self.setDragMode(QGraphicsView.RubberBandDrag)
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setRenderHint(QPainter.Antialiasing) # noqa
+        self.setDragMode(QGraphicsView.RubberBandDrag) # noqa
+        self.setFocusPolicy(Qt.StrongFocus) # noqa
         self.setStyleSheet("QScrollBar { width: 0px; height: 0px; }")
         self.view_scale = 1
         self.add_sealing_checkbox()
@@ -24,12 +26,10 @@ class Graphics(QGraphicsView):
         self.viewport().setMouseTracking(True)
 
     def add_sealing_checkbox(self):
-        self.checkbox_widget = QWidget(self)
         self.checkbox_widget.setStyleSheet("background-color: rgba(255,255,255,50);")
         self.checkbox_widget.setFixedSize(140, 50)
         layout = QHBoxLayout(self.checkbox_widget)
         layout.setContentsMargins(5, 5, 5, 5)
-        self.sealing_group = CheckBoxGroup(self)
         layout.addWidget(self.sealing_group)
         self.update_checkbox_position()
 
@@ -62,7 +62,7 @@ class Graphics(QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MiddleButton:
-            self.setDragMode(QGraphicsView.ScrollHandDrag)
+            self.setDragMode(QGraphicsView.ScrollHandDrag) # noqa
             fake_event = QMouseEvent(
                 event.type(), event.localPos(), event.screenPos(),
                 Qt.LeftButton, Qt.LeftButton, event.modifiers()
@@ -73,7 +73,7 @@ class Graphics(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MiddleButton:
-            self.setDragMode(QGraphicsView.RubberBandDrag)
+            self.setDragMode(QGraphicsView.RubberBandDrag) # noqa
         super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event):
@@ -91,12 +91,11 @@ class Graphics(QGraphicsView):
 
         for item in items:
             if isinstance(item, BarItem):
-                # Показываем тултип с информацией о стержне
-                tooltip_text = (f"Стержень\n"
-                                f"Длина: {item.real_length:.3f} м\n"
-                                f"Сечение: {item.real_height:.3f} м²\n"
-                                f"Модуль упругости: {item.modulus_elasticity:.0f} Па\n"
-                                f"Допускаемое напряжение: {item.voltage:.0f} Па")
+                tooltip_text = (f"Стержень {item.bar_number}\n"
+                                f"Длина: {item.real_length} м\n"
+                                f"Сечение: {item.real_height} м²\n"
+                                f"Модуль упругости: {item.modulus_elasticity} Па\n"
+                                f"Допускаемое напряжение: {item.voltage} Па")
                 QToolTip.showText(event.globalPos(), tooltip_text, self)
                 break
         else:

@@ -8,6 +8,7 @@ from widgets.fileDialog import FileDialog
 from widgets.manual import Manual
 from widgets.validators import DataValidator
 
+
 class MenuBar(QMenuBar):
     def __init__(self, parent=None):
         QMenuBar.__init__(self, parent)
@@ -17,18 +18,28 @@ class MenuBar(QMenuBar):
     def setup_menu_bar(self):
         file_menu = QMenu("&Файл", self)
 
+        # ДОБАВЛЯЕМ ДЕЙСТВИЕ "НОВЫЙ"
+        new_action = QAction(QIcon("images/icons/new_icon.png"), "Новый", file_menu)
+        new_action.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_N))
+        new_action.triggered.connect(self.new_file)  # noqa
+
         open_action = QAction(QIcon("images/icons/open_icon.png"), "Открыть", file_menu)
         open_action.setShortcut(QKeySequence(Qt.ALT + Qt.Key_O))
         open_action.triggered.connect(self.open_file)  # noqa
+
         save_action = QAction(QIcon("images/icons/save_icon.png"), "Сохранить", file_menu)
         save_action.setShortcut(QKeySequence(Qt.ALT + Qt.Key_S))
         save_action.triggered.connect(self.save_file)  # noqa
+
         exit_action = QAction(QIcon("images/icons/exit_icon.png"), "Выход", file_menu)
         exit_action.setShortcut(QKeySequence(Qt.ALT + Qt.Key_C))
         exit_action.triggered.connect(self.parent.close)  # noqa
 
+        file_menu.addAction(new_action)
+        file_menu.addSeparator()
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
+        file_menu.addSeparator()
         file_menu.addAction(exit_action)
 
         reference_menu = QMenu("Справка", self)
@@ -41,6 +52,24 @@ class MenuBar(QMenuBar):
 
         self.addMenu(file_menu)
         self.addMenu(reference_menu)
+
+    def new_file(self):
+        """Создает новый пустой проект"""
+        if self.has_unsaved_changes():
+            pass
+        self.parent.preprocessor.graphics.scene.clear_all()
+        self.parent.preprocessor.bar_table.setRowCount(0)
+        self.parent.preprocessor.bar_table.add_button_row()
+        self.parent.preprocessor.concentrated_loads_table.setRowCount(0)
+        self.parent.preprocessor.concentrated_loads_table.add_button_row()
+        self.parent.preprocessor.distributed_loads_table.setRowCount(0)
+        self.parent.preprocessor.distributed_loads_table.add_button_row()
+        self.parent.file_path = None
+        self.parent.status_bar.showMessage("Создан новый проект", msecs=4000)
+
+    def has_unsaved_changes(self):
+        """Проверяет, есть ли несохраненные изменения"""
+        return False
 
     def save_file(self):
         if not self.parent.file_path:
